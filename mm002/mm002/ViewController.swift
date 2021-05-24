@@ -10,24 +10,22 @@ import UIKit
 class ViewController: UIViewController,UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITextFieldDelegate {
 
     @IBOutlet weak var imagePickerView: UIImageView!
-    @IBOutlet weak var cameraButton: UIButton!
-    @IBOutlet weak var shareButton: UIButton!
     @IBOutlet weak var textFieldTop: UITextField!
     @IBOutlet weak var textFieldBottom: UITextField!
     @IBOutlet weak var imageViewPhotoSelected: UIImageView!
-    @IBOutlet weak var controlBarMenu: UIStackView!
-    
-//    var textOnTop : String
-//    var textOnBottom :  String
-//    var imageSelected : UIImage
-    
+    @IBOutlet weak var toolbarBottomMenu: UIToolbar!
+    @IBOutlet weak var cameraButton: UIBarButtonItem!
+    @IBOutlet weak var shareButton: UIBarButtonItem!
+//    controlBarMenu
     
     // Mark Style for text field
+    
+    
     let memeTextAttributes: [NSAttributedString.Key: Any] = [
-        NSAttributedString.Key.strokeColor: UIColor.yellow ,
-        NSAttributedString.Key.foregroundColor: UIColor.yellow,
+        NSAttributedString.Key.strokeColor: UIColor.black ,
+        NSAttributedString.Key.foregroundColor: UIColor.white,
         NSAttributedString.Key.font: UIFont(name: "HelveticaNeue-CondensedBlack", size: 40)!,
-        NSAttributedString.Key.strokeWidth:  3.5
+        NSAttributedString.Key.strokeWidth:  -3.5
     ]
 
     
@@ -37,14 +35,8 @@ class ViewController: UIViewController,UIImagePickerControllerDelegate, UINaviga
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        textFieldTop.delegate = self
-        textFieldBottom.delegate = self
-        
-        textFieldTop.defaultTextAttributes = memeTextAttributes
-        textFieldBottom.defaultTextAttributes = memeTextAttributes
-        
-        textFieldTop.text = "TOP"
-        textFieldBottom.text = "BOTTOM"
+        setupTextField(textField: textFieldTop, text: "TOP")
+        setupTextField(textField: textFieldBottom, text: "BOTTOM")
         textFieldTop.textAlignment = .center
         textFieldBottom.textAlignment = .center
         
@@ -62,6 +54,15 @@ class ViewController: UIViewController,UIImagePickerControllerDelegate, UINaviga
         super.viewWillDisappear(animated)
         unsubscribeFromKeyboardNotifications()
     }
+    
+    //    refacoting
+    func setupTextField(textField: UITextField, text: String) {
+        textField.delegate = self
+        textField.defaultTextAttributes = memeTextAttributes
+        textField.text = text
+        textField.textAlignment = .center
+    }
+    
     
     
     // Mark Keyboard manipulation
@@ -129,10 +130,8 @@ class ViewController: UIViewController,UIImagePickerControllerDelegate, UINaviga
     // MARK Image Picker
     
     @IBAction func pickAnImage(_ sender: Any) {
-        let pickController = UIImagePickerController()
-        pickController.delegate = self
-        pickController.sourceType = .photoLibrary
-        present(pickController, animated: true, completion: nil)
+
+        choosingImage(source: .photoLibrary)
     }
     
     
@@ -150,13 +149,16 @@ class ViewController: UIViewController,UIImagePickerControllerDelegate, UINaviga
     
     
     @IBAction func pickAnImageFromCamera(_ sender: Any) {
-
-         let imagePicker = UIImagePickerController()
-         imagePicker.delegate = self
-         present(imagePicker, animated: true, completion: nil)
+        choosingImage(source: .camera)
      }
     
-    
+    // refactoring
+    func choosingImage(source: UIImagePickerController.SourceType){
+        let pickController = UIImagePickerController()
+        pickController.delegate = self
+        pickController.sourceType = source
+        present(pickController, animated: true, completion: nil)
+    }
     
     
     
@@ -170,7 +172,7 @@ class ViewController: UIViewController,UIImagePickerControllerDelegate, UINaviga
            let memedImage: UIImage
        }
     
-    func generateMemedImage(objectToToggle: UIStackView) -> UIImage {
+    func generateMemedImage(objectToToggle: UIToolbar) -> UIImage {
             
             objectToToggle.isHidden = true
             
@@ -193,20 +195,22 @@ class ViewController: UIViewController,UIImagePickerControllerDelegate, UINaviga
                topText:self.textFieldTop.text!,
                bottomText: self.textFieldBottom.text!,
                originalImage: self.imagePickerView.image!,
-               memedImage: generateMemedImage(objectToToggle: controlBarMenu))
+               memedImage: generateMemedImage(objectToToggle: toolbarBottomMenu))
         
         self.resetViewPropreties()
        }
     
        @IBAction func Share(_ sender: Any) {
-           let sharedImage = generateMemedImage(objectToToggle: controlBarMenu)
+           let sharedImage = generateMemedImage(objectToToggle: toolbarBottomMenu)
            // generate the meme
            let activityController = UIActivityViewController(activityItems:    [sharedImage], applicationActivities: nil)
            self.present(activityController, animated: true, completion: nil)
            
-           activityController.completionWithItemsHandler = { (activity, success, items, error) in
-                   self.save()
-            
+           activityController.completionWithItemsHandler = { (_,completed, _ , _) in //activity,completed, items, error
+                  
+            if completed {
+                self.save()
+            }
                }
             
        }
